@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Motasem Mohamed</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="./icons/tapicon.png" type="image/png" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDKs (v9 Compat — CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+  <style>
+    /* ==============================
+         Base Reset & Global
+         ============================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Orbitron', Arial, Helvetica, sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      background: #000;
+      color: white;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    canvas#particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(circle at top, #111827, #000);
+    }
+
+    /* ==============================
+         Login Screen
+         ============================== */
+    #loginScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      animation: fadeInUp 0.7s ease-out forwards;
+      box-shadow: 0 8px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo i {
+      font-size: 48px;
+      color: #3b82f6;
+      margin-bottom: 12px;
+    }
+
+    .login-logo h1 {
+      font-size: 20px;
+      letter-spacing: 2px;
+      color: white;
+    }
+
+    .login-logo p {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 6px;
+      letter-spacing: 1px;
+      font-family: Arial, sans-serif;
+      font-weight: 400;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      transition: border-color 0.3s, background 0.3s;
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: #4b5563;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      margin-top: 8px;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .login-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      color: #fca5a5;
+      margin-bottom: 18px;
+      display: none;
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20% {
+        transform: translateX(-8px);
+      }
+
+      40% {
+        transform: translateX(8px);
+      }
+
+      60% {
+        transform: translateX(-5px);
+      }
+
+      80% {
+        transform: translateX(5px);
+      }
+    }
+
+    /* ==============================
+         Dashboard
+         ============================== */
+    #dashboard {
+      position: relative;
+      z-index: 10;
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    /* Navbar */
+    .admin-navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 5%;
+      height: 70px;
+      background: radial-gradient(ellipse at top, rgba(17, 24, 39, 0.8), transparent 80%);
+      backdrop-filter: blur(6px);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      animation: fadeInDown 0.6s ease-out;
+    }
+
+    .admin-navbar .brand {
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-navbar .brand i {
+      color: #3b82f6;
+      font-size: 18px;
+    }
+
+    .admin-badge {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #3b82f6;
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: Arial, sans-serif;
+    }
+
+    .user-email {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 1px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.3);
+      border-color: rgba(239, 68, 68, 0.6);
+      color: white;
+    }
+
+    /* Main Content */
+    .admin-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 50px 5% 80px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 36px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .admin-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .admin-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 32px;
+      animation: fadeInUp 0.7s ease-out forwards;
+    }
+
+    .admin-card h2 {
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: #3b82f6;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-card h2 i {
+      font-size: 16px;
+    }
+
+    /* Add form submit button */
+    #addProjectForm .btn-primary {
+      margin-top: 4px;
+    }
+
+    /* Projects List */
+    #projectsList {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 600px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(59, 130, 246, 0.4) transparent;
+    }
+
+    #projectsList::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #projectsList::-webkit-scrollbar-thumb {
+      background: rgba(59, 130, 246, 0.4);
+      border-radius: 2px;
+    }
+
+    .admin-project-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      transition: background 0.3s, border-color 0.3s;
+      animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    .admin-project-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .admin-project-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .admin-project-thumb {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .admin-project-info h3 {
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: white;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .admin-project-info p {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn-delete {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    .btn-delete:hover {
+      background: rgba(239, 68, 68, 0.3);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: white;
+    }
+
+    .projects-empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #4b5563;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .projects-empty-state i {
+      font-size: 40px;
+      margin-bottom: 14px;
+      display: block;
+      opacity: 0.4;
+    }
+
+    .projects-count {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ==============================
+         Toast Notifications
+         ============================== */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast-item {
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toastIn 0.3s ease-out forwards;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      pointer-events: auto;
+      max-width: 320px;
+    }
+
+    .toast-success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
+
+    .toast-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+
+    .toast-out {
+      animation: toastOut 0.3s ease-in forwards;
+    }
+
+    /* ==============================
+         Animations
+         ============================== */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes toastOut {
+      from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+      }
+    }
+
+    /* Loading spinner for auth state check */
+    #authLoader {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(59, 130, 246, 0.2);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #authLoader p {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #4b5563;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Particle Canvas -->
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- Auth Loading Screen -->
+  <div id="authLoader">
+    <div class="spinner"></div>
+    <p>AUTHENTICATING</p>
+  </div>
+
+  <!-- ==================== LOGIN SCREEN ==================== -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">
+        <i class="fas fa-shield-halved"></i>
+        <h1>ADMIN PANEL</h1>
+        <p>MOTASEM MOHAMED — PORTFOLIO</p>
+      </div>
+
+      <div class="login-error" id="loginError">
+        <i class="fas fa-circle-exclamation"></i>&nbsp;
+        <span id="loginErrorMsg">Invalid credentials. Please try again.</span>
+      </div>
+
+      <div class="form-group">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" placeholder="admin@example.com" autocomplete="email" />
+      </div>
+
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+
+      <button class="btn-primary" id="loginBtn" onclick="handleLogin()">
+        <i class="fas fa-right-to-bracket"></i>&nbsp; SIGN IN
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <div id="dashboard">
+    <!-- Navbar -->
+    <nav class="admin-navbar">
+      <div class="brand">
+        <i class="fas fa-layer-group"></i>
+        DASHBOARD
+        <span class="admin-badge">ADMIN</span>
+      </div>
+      <div class="user-info">
+        <span class="user-email" id="userEmailDisplay"></span>
+        <button class="btn-logout" onclick="handleLogout()">
+          <i class="fas fa-right-from-bracket"></i> LOGOUT
+        </button>
+      </div>
+    </nav>
+
+    <!-- Content Grid -->
+    <div class="admin-content">
+
+      <!-- Add Project Form -->
+      <div class="admin-card">
+        <h2><i class="fas fa-circle-plus"></i> ADD PROJECT</h2>
+        <form id="addProjectForm" onsubmit="handleAddProject(event)">
+          <div class="form-group">
+            <label for="projectTitle">Project Title *</label>
+            <input type="text" id="projectTitle" placeholder="e.g. Portfolio Website" required />
+          </div>
+
+          <div class="form-group">
+            <label for="projectDesc">Description *</label>
+            <textarea id="projectDesc" placeholder="Short description of the project..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="projectImage">Image URL</label>
+            <input type="url" id="projectImage" placeholder="https://example.com/image.jpg" />
+          </div>
+
+          <div class="form-group">
+            <label for="projectLink">Project Link *</label>
+            <input type="url" id="projectLink" placeholder="https://github.com/..." required />
+          </div>
+
+          <button type="submit" class="btn-primary" id="addBtn">
+            <i class="fas fa-cloud-arrow-up"></i>&nbsp; ADD PROJECT
+          </button>
+        </form>
+      </div>
+
+      <!-- Projects List -->
+      <div class="admin-card">
+        <h2><i class="fas fa-folder-open"></i> CURRENT PROJECTS</h2>
+        <div class="projects-count" id="projectsCount">Loading...</div>
+        <div id="projectsList">
+          <div class="projects-empty-state">
+            <i class="fas fa-inbox"></i>
+            No projects yet. Add your first one!
+          </div>
+        </div>
+      </div>
+
+      <!-- ──────────────────────────────── SKILLS ROW ──────────────── -->
+      <!-- Add Skill Form -->
+      <div class="admin-card">
+        <h2><i class="fas fa-star"></i> ADD SKILL</h2>
+        <form id="addSkillForm" onsubmit="handleAddSkill(event)">
+          <div class="form-group">
+            <label for="skillName">Skill Name *</label>
+            <input type="text" id="skillName" placeholder="e.g. JavaScript" required />
+          </div>
+
+          <button type="submit" class="btn-primary" id="addSkillBtn">
+            <i class="fas fa-cloud-arrow-up"></i>&nbsp; ADD SKILL
+          </button>
+        </form>
+      </div>
+
+      <!-- Current Skills List -->
+      <div class="admin-card">
+        <h2><i class="fas fa-bolt"></i> CURRENT SKILLS</h2>
+        <div class="projects-count" id="skillsCount">Loading...</div>
+        <div id="skillsList">
+          <div class="projects-empty-state">
+            <i class="fas fa-inbox"></i>
+            No skills yet. Add your first one!
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast"></div>
+
+  <script>
+    /* ============================================================
+       🔒 FIREBASE CONFIG — REPLACE THIS WITH YOUR OWN CONFIG
+       ============================================================
+       Steps to get your Firebase Config:
+       1. Open Firebase Console: https://console.firebase.google.com/
+       2. Select your project → Project Settings (⚙️)
+       3. Scroll down to "Your apps" → Web App
+       4. Copy the entire firebaseConfig object
+       5. Replace the config object below with your own
+       6. Verify databaseURL matches your project ID in:
+          Firebase Console → Realtime Database → Data tab
+          (Look for URL like: https://YOUR_PROJECT-rtdb.firebaseio.com)
+       ============================================================ */
+    const firebaseConfig = {
+      apiKey: "AIzaSyCzV_3AXHLtaMjfJEA4FH7vfxoxstk1wQ4",
+      authDomain: "mportfolio-admin.firebaseapp.com",
+      databaseURL: "https://mportfolio-admin-default-rtdb.firebaseio.com", // ✅ Required for Realtime Database
+      projectId: "mportfolio-admin",
+      storageBucket: "mportfolio-admin.firebasestorage.app",
+      messagingSenderId: "105882157212",
+      appId: "1:105882157212:web:8c857a5e42f93d8371ad59"
+    };
+    /* ============================================================ */
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    /* ============================================================
+       PARTICLE BACKGROUND
+       ============================================================ */
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+
+    const particles = [];
+    for (let i = 0; i < 100; i++) {
+      particles.push({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 2 + 0.5
+      });
+    }
+
+    (function animateParticles() {
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > W) p.vx *= -1;
+        if (p.y < 0 || p.y > H) p.vy *= -1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fill();
+      });
+      requestAnimationFrame(animateParticles);
+    })();
+
+    window.addEventListener('resize', () => {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    });
+
+    /* ============================================================
+       AUTH STATE
+       ============================================================ */
+    auth.onAuthStateChanged(user => {
+      const loader = document.getElementById('authLoader');
+      loader.style.display = 'none';
+
+      if (user) {
+        showDashboard(user);
+      } else {
+        showLogin();
+      }
+    });
+
+    function showLogin() {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('dashboard').style.display = 'none';
+    }
+
+    function showDashboard(user) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'flex';
+      document.getElementById('userEmailDisplay').textContent = user.email;
+      listenProjects();
+      listenSkills();
+    }
+
+    /* ============================================================
+       LOGIN / LOGOUT
+       ============================================================ */
+    // Allow Enter key to submit login
+    document.getElementById('loginPassword').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleLogin();
+    });
+
+    function handleLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('loginBtn');
+      const errBox = document.getElementById('loginError');
+      const errMsg = document.getElementById('loginErrorMsg');
+
+      errBox.style.display = 'none';
+
+      if (!email || !password) {
+        showLoginError('Please enter your email and password.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; SIGNING IN...';
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          // onAuthStateChanged will handle the redirect
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-right-to-bracket"></i>&nbsp; SIGN IN';
+          let msg = 'Invalid email or password. Please try again.';
+          if (err.code === 'auth/invalid-email') msg = 'Invalid email address format.';
+          if (err.code === 'auth/user-disabled') msg = 'This account has been disabled.';
+          if (err.code === 'auth/too-many-requests') msg = 'Too many failed attempts. Try again later.';
+          showLoginError(msg);
+        });
+    }
+
+    function showLoginError(msg) {
+      const errBox = document.getElementById('loginError');
+      document.getElementById('loginErrorMsg').textContent = msg;
+      errBox.style.display = 'block';
+      // re-trigger shake
+      errBox.style.animation = 'none';
+      void errBox.offsetWidth;
+      errBox.style.animation = 'shake 0.4s ease';
+    }
+
+    function handleLogout() {
+      auth.signOut().then(() => {
+        showToast('Signed out successfully.', 'success');
+      });
+    }
+
+    /* ============================================================
+       ADD PROJECT
+       ============================================================ */
+    function handleAddProject(e) {
+      e.preventDefault();
+
+      const title = document.getElementById('projectTitle').value.trim();
+      const desc = document.getElementById('projectDesc').value.trim();
+      const image = document.getElementById('projectImage').value.trim();
+      const link = document.getElementById('projectLink').value.trim();
+      const btn = document.getElementById('addBtn');
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; SAVING...';
+
+      db.ref('projects').push({
+        title,
+        description: desc,
+        imageUrl: image || '',
+        projectLink: link,
+        createdAt: Date.now()
+      })
+        .then(() => {
+          showToast('Project added successfully!', 'success');
+          document.getElementById('addProjectForm').reset();
+        })
+        .catch(err => {
+          showToast('Error: ' + err.message, 'error');
+        })
+        .finally(() => {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i>&nbsp; ADD PROJECT';
+        });
+    }
+
+    /* ============================================================
+       REAL-TIME PROJECT LIST (Admin)
+       ============================================================ */
+    let projectsRef = null;
+
+    function listenProjects() {
+      projectsRef = db.ref('projects').orderByChild('createdAt');
+
+      projectsRef.on('value', snapshot => {
+        const list = document.getElementById('projectsList');
+        const countEl = document.getElementById('projectsCount');
+        list.innerHTML = '';
+
+        const data = snapshot.val();
+        if (!data) {
+          countEl.textContent = '0 projects';
+          list.innerHTML = `
+              <div class="projects-empty-state">
+                <i class="fas fa-inbox"></i>
+                No projects yet. Add your first one!
+              </div>`;
+          return;
+        }
+
+        const entries = Object.entries(data).reverse();
+        countEl.textContent = `${entries.length} project${entries.length !== 1 ? 's' : ''}`;
+
+        entries.forEach(([key, proj]) => {
+          const item = document.createElement('div');
+          item.className = 'admin-project-item';
+          item.innerHTML = `
+              ${proj.imageUrl
+              ? `<img class="admin-project-thumb" src="${escHtml(proj.imageUrl)}"
+                        alt="${escHtml(proj.title)}"
+                        onerror="this.style.display='none'">`
+              : `<div class="admin-project-thumb" style="display:flex;align-items:center;justify-content:center;color:#374151;">
+                     <i class="fas fa-image"></i>
+                   </div>`}
+              <div class="admin-project-info">
+                <h3>${escHtml(proj.title)}</h3>
+                <p>${escHtml(proj.description)}</p>
+              </div>
+              <button class="btn-delete" onclick="handleDelete('${escHtml(key)}', '${escHtml(proj.title)}')">
+                <i class="fas fa-trash"></i> DEL
+              </button>`;
+          list.appendChild(item);
+        });
+      });
+    }
+
+    /* ============================================================
+       DELETE PROJECT
+       ============================================================ */
+    function handleDelete(key, title) {
+      if (!confirm(`Delete "${title}"?\n\nThis cannot be undone.`)) return;
+
+      db.ref('projects/' + key).remove()
+        .then(() => showToast('Project deleted.', 'success'))
+        .catch(err => showToast('Error: ' + err.message, 'error'));
+    }
+
+    /* ============================================================
+       TOAST HELPER
+       ============================================================ */
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast');
+      const toast = document.createElement('div');
+      const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-xmark';
+      toast.className = `toast-item toast-${type}`;
+      toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('toast-out');
+        toast.addEventListener('animationend', () => toast.remove());
+      }, 3500);
+    }
+
+    /* ============================================================
+       ADD SKILL
+       ============================================================ */
+    function handleAddSkill(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('skillName').value.trim();
+      const btn  = document.getElementById('addSkillBtn');
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; SAVING...';
+
+      db.ref('skills').push({
+        name,
+        createdAt: Date.now()
+      })
+        .then(() => {
+          showToast('Skill added!', 'success');
+          document.getElementById('addSkillForm').reset();
+        })
+        .catch(err => showToast('Error: ' + err.message, 'error'))
+        .finally(() => {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i>&nbsp; ADD SKILL';
+        });
+    }
+
+    /* ============================================================
+       REAL-TIME SKILLS LIST (Admin)
+       ============================================================ */
+    let skillsRef = null;
+
+    function listenSkills() {
+      skillsRef = db.ref('skills').orderByChild('createdAt');
+
+      skillsRef.on('value', snapshot => {
+        const list    = document.getElementById('skillsList');
+        const countEl = document.getElementById('skillsCount');
+        list.innerHTML = '';
+
+        const data = snapshot.val();
+        if (!data) {
+          countEl.textContent = '0 skills';
+          list.innerHTML = `
+            <div class="projects-empty-state">
+              <i class="fas fa-inbox"></i>
+              No skills yet. Add your first one!
+            </div>`;
+          return;
+        }
+
+        const entries = Object.entries(data).reverse();
+        countEl.textContent = `${entries.length} skill${entries.length !== 1 ? 's' : ''}`;
+
+        entries.forEach(([key, skill]) => {
+          const item = document.createElement('div');
+          item.className = 'admin-project-item';
+          item.innerHTML = `
+            <div class="admin-project-info" style="flex: 1;">
+              <h3>${escHtml(skill.name)}</h3>
+            </div>
+            <button class="btn-delete" onclick="handleDeleteSkill('${escHtml(key)}', '${escHtml(skill.name)}')">
+              <i class="fas fa-trash"></i> DEL
+            </button>`;
+          list.appendChild(item);
+        });
+      });
+    }
+
+    /* ============================================================
+       DELETE SKILL
+       ============================================================ */
+    function handleDeleteSkill(key, name) {
+      if (!confirm(`Delete skill "${name}"?\n\nThis cannot be undone.`)) return;
+
+      db.ref('skills/' + key).remove()
+        .then(() => showToast('Skill deleted.', 'success'))
+        .catch(err => showToast('Error: ' + err.message, 'error'));
+    }
+
+    /* ============================================================
+       XSS HELPER
+       ============================================================ */
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+
+</html>
